@@ -7,11 +7,11 @@ from tqdm import tqdm
 
 from csv_to_hdf5 import csv_preprocess
 
-csvfile = './node02.csv'
-filename = './2021-04-27-16-03 02.csv'
+fence_cfg = './node02_fence.csv'
+bbox_cfg = './node02_bbox.csv'
 img_dir = './2021_04_21/'
 
-df = csv_preprocess(filename)
+df = csv_preprocess(bbox_cfg)
 
 def iou(boxA, boxB):
     xA = max(boxA[0], boxB[0])
@@ -25,7 +25,7 @@ def iou(boxA, boxB):
     iou = interArea / boxBArea
     return iou
 
-with open(csvfile, newline='') as f:
+with open(fence_cfg, newline='') as f:
     rows = csv.reader(f)
     fence = [[int(x) for x in r] for r in rows]
 

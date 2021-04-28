@@ -27,3 +27,5 @@ if __name__ == '__main__':
     df = csv_preprocess(infile)
     df.to_hdf(outfile, key='df', mode='w')
 
+    ## To read h5
+    #  pd.read_hdf("store_tl.h5", "df")
