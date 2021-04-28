@@ -98,6 +98,7 @@ class Window(QMainWindow):
         self.actionOpen_Image.triggered.connect(self.open_image)
         self.logBn.clicked.connect(self.open_log)
         self.csvBn.clicked.connect(self.save_csv)
+        self.imgBn.clicked.connect(self.save_img)
         #  self.cntBox.valueChanged.connect(self.update_cnt)
 
         self.canvas.mpl_connect('key_press_event', toggle_selector)
@@ -167,6 +168,9 @@ class Window(QMainWindow):
             with open(path[0], 'w') as f:
                 writer = csv.writer(f)
                 writer.writerows(self.bbox02)
+
+    def save_img(self):
+        return
 
 
 
