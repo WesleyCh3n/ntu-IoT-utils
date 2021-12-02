@@ -1,3 +1,8 @@
+#!/usr/bin/python3
+# -*- coding: utf-8 -*-
+
+# Purpose: some misc utility functions
+
 import importlib.util
 import warnings
 import os

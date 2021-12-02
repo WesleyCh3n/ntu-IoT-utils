@@ -1,6 +1,11 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
+# Purpose: using GPU post predict batch node's images and return
+#   1. result csv after voting
+#   2. bounding boxed images
+# After this process, using the results to calculate models TP/TN/FP/FN (F1-score etc)
+
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  #supress tensorflow info except error
 os.environ["CUDA_VISIBLE_DEVICES"]= "1"

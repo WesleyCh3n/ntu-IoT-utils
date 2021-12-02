@@ -1,3 +1,8 @@
+#!/usr/bin/python3
+# -*- coding: utf-8 -*-
+
+# Purpose: using influxDB csv results draw cow faces bbox and export to mp4
+
 import pandas as pd
 import os
 import csv

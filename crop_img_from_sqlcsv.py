@@ -1,3 +1,9 @@
+#!/usr/bin/python3
+# -*- coding: utf-8 -*-
+
+# Purpose: using influxDB csv results Crop cow faces and put into
+#   corresponding fence folder.
+
 import pandas as pd
 import os
 import csv

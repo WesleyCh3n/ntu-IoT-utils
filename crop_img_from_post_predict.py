@@ -1,3 +1,9 @@
+#!/usr/bin/python3
+# -*- coding: utf-8 -*-
+
+# Purpose: using GPU detect batch node's images and Crop cow faces and put into
+#   corresponding fence folder.
+
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  #supress tensorflow info except error
 import cv2
