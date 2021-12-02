@@ -10,7 +10,7 @@ import cv2
 import pathlib
 from tqdm import tqdm
 
-from csv_to_hdf5 import csv_preprocess
+from utils import csv_preprocess
 
 fence_cfg = './node02_fence.csv'
 bbox_cfg = './node02_bbox.csv'
