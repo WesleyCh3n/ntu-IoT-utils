@@ -7,14 +7,12 @@ os.environ["CUDA_VISIBLE_DEVICES"]= "1"
 import cv2
 import csv
 import sys
-import glob
 import pathlib
 import numpy as np
 import pandas as pd
 from datetime import datetime, timedelta
-import tensorflow as tf
 from tqdm import tqdm
-from model.parse_params import parse_params
+from utils import parse_params
 from model.triplet_model_fn import model_fn
 
 
@@ -30,18 +28,21 @@ def iou(boxA, boxB):
     xB = min(boxA[2], boxB[2])
     yB = min(boxA[3], boxB[3])
     interArea = max(0, xB - xA + 1) * max(0, yB - yA + 1)
-    boxAArea = (boxA[2] - boxA[0] + 1) * (boxA[3] - boxA[1] + 1)
+    # boxAArea = (boxA[2] - boxA[0] + 1) * (boxA[3] - boxA[1] + 1)
     boxBArea = (boxB[2] - boxB[0] + 1) * (boxB[3] - boxB[1] + 1)
     iou = interArea / boxBArea
     return iou
 
 if __name__ == "__main__":
+################################################################################
+#                             global config params                             #
+################################################################################
     node = f'{int(sys.argv[1]):02d}'
     print(node)
     m = '03'
     d = '19'
     fence_cfg = f'./cfg/node{node}_fence.csv'
-    threshold = 0.676
+    distance_threshold = 0.676  # TODO: need to experiment
     size = (416, 416)
     img_dir = f'/home/ubuntu/Analyze_data/IMG/NODE{node}/2021_{m}_{d}/'
     out_dir = f'/home/ubuntu/Analyze_data/OUT_IMG/NODE{node}/2021_{m}_{d}/'
@@ -54,40 +55,54 @@ if __name__ == "__main__":
     start_time = datetime(1900, 1, 1, 6, 0, 0)
     end_time = datetime(1900, 1, 1, 18, 0, 0)
 
-
-    # outdir
+################################################################################
+#                            create img output dir                             #
+################################################################################
     outdir = pathlib.Path(out_dir)
     outdir.mkdir(parents=True, exist_ok=True)
 
-    # build mobilenet model
+################################################################################
+#                            build mobilenet model                             #
+################################################################################
     params = parse_params(mobilenet_param_path)
     m_model = model_fn(params, is_training=False)
     m_model.load_weights(os.path.join(mobilenet_param_path, 'model'))
 
-    # build yolo model
+################################################################################
+#                               build yolo model                               #
+################################################################################
     net = cv2.dnn.readNet(weight, cfg)
     net.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
     net.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA)
     model = cv2.dnn_DetectionModel(net)
     model.setInputParams(size=size, scale=1./255, swapRB=True)
 
-    # fence_cfg
+################################################################################
+#                                load fence cfg                                #
+################################################################################
     with open(fence_cfg, newline='') as f:
         rows = csv.reader(f)
         fence = [[int(x) for x in r] for r in rows]
 
-    # ref_dict
+################################################################################
+#                          load cow number dictionary                          #
+################################################################################
     ref_dict = dict()
     with open(ref_dict_path, newline='') as f:
         rows = csv.reader(f)
         for i, r in enumerate(rows):
             ref_dict[int(i)] = r[0]
 
-    # Open reference feature
+################################################################################
+#                          load cow database feature                           #
+################################################################################
     refs = np.loadtxt(ref_vec_path, dtype=np.float16, delimiter='\t')
 
 
+
+################################################################################
 #=================== Enter img dir, start predict ============================#
+################################################################################
     os.chdir(img_dir)
 
     files = sorted(os.listdir())
@@ -151,7 +166,7 @@ if __name__ == "__main__":
             ID = ref_dict[min_index]
 
             df_dist[which_f][file] = np.amin(dists)
-            if np.amin(dists) < threshold:
+            if np.amin(dists) < distance_threshold:
                 df[ID][file] = 1
                 df[f"f{which_f}-id"][file] = int(ID)
             else:
@@ -162,14 +177,17 @@ if __name__ == "__main__":
     df_dist.to_csv(outdir.parent.absolute().joinpath(f"dist.{node}-2021_{m}_{d}.csv"))
     df_feat.to_pickle(outdir.parent.absolute().joinpath(f"feat.{node}-2021_{m}_{d}.pkl"))
 
+################################################################################
 #=================== Voting system ===========================================#
+################################################################################
     df = pd.read_csv(outdir.parent.absolute().joinpath(f"full.{node}-2021_{m}_{d}.csv"), index_col=0)
     print("start voting")
     df.loc[:, '10008':'10706'] = 0
     fs = ['f0','f1','f2']
+
     def check(t, result):
         for l, r in result:
-            if l < s and s < r:
+            if l < t and t < r:
                 return False
         return True
 
@@ -216,7 +234,9 @@ if __name__ == "__main__":
                 df.loc[index, str(df.loc[index, f'{f}-id'])] = 1
     df.to_csv(outdir.parent.absolute().joinpath(f"vote.{node}-2021_{m}_{d}.csv"))
 
-#  #============================ Drawing box ====================================#
+################################################################################
+#============================= Drawing box ====================================#
+################################################################################
     df = pd.read_csv(outdir.parent.absolute().joinpath(f"full.{node}-2021_{m}_{d}.csv"), index_col=0)
     df_box = pd.read_pickle(outdir.parent.absolute().joinpath(f"feat.{node}-2021_{m}_{d}.pkl"))
     df_vote = pd.read_csv(outdir.parent.absolute().joinpath(f"vote.{node}-2021_{m}_{d}.csv"), index_col=0)
